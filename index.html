@@ -9,6 +9,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- ═══════════════════════════════════════
+         META PIXEL
+         Substitua SEU_PIXEL_ID pelo seu ID real
+         Encontre em: Meta Business > Events Manager > Pixels
+    ═══════════════════════════════════════ -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', 'SEU_PIXEL_ID'); // ← SUBSTITUA AQUI
+    fbq('track', 'PageView');
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=SEU_PIXEL_ID&ev=PageView&noscript=1"/>
+    </noscript>
+    <!-- Fim Meta Pixel -->
+
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -878,7 +901,7 @@
         e.target.value = v;
     });
 
-    /* ─── FORM SUBMIT → WHATSAPP ─── */
+    /* ─── FORM SUBMIT ─── */
     function handleSubmit(e) {
         e.preventDefault();
         var nome      = document.getElementById('nome').value.trim();
@@ -890,25 +913,54 @@
         if (!nome || !telefone || !barbearia) { alert('Por favor, preencha todos os campos.'); return; }
         if (!tempo || !func) { alert('Por favor, responda todas as perguntas.'); return; }
 
-        /* ── CONFIGURE SEU NÚMERO AQUI ──
-           Formato: 55 + DDD + número (apenas dígitos)
-           Exemplo: 5511999999999
-        ───────────────────────────────── */
-        var numero = '5500000000000'; // ← SUBSTITUA PELO SEU NÚMERO
+        /* ══════════════════════════════════════════
+           CONFIGURAÇÕES — preencha os 3 valores abaixo
+        ══════════════════════════════════════════ */
 
-        var msg = encodeURIComponent(
-            '*Nova inscrição, Webinário Barbearia 1907* 🎉\n\n' +
-            '👤 Nome: '            + nome          + '\n' +
-            '📱 WhatsApp: '        + telefone       + '\n' +
-            '✂️ Barbearia: '       + barbearia      + '\n' +
-            '📅 Tempo no mercado: '+ tempo.value   + '\n' +
-            '👥 Funcionários: '    + func.value
-        );
+        // 1. URL do Apps Script (veja instruções abaixo)
+        var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxVUz5vn8Br8QjExmN8wOcjICAhWjWNcfFTU5zarbzJKeoAdxE7mEBR74GzkbIglQ55/exec';
 
+        // 2. Seu número de WhatsApp (55 + DDD + número, só dígitos)
+        var WA_NUMERO  = '5500000000000';
+
+        /* ══════════════════════════════════════════ */
+
+        var payload = {
+            nome:         nome,
+            telefone:     telefone,
+            barbearia:    barbearia,
+            tempo:        tempo.value,
+            funcionarios: func.value
+        };
+
+        // → Envia para Google Sheets via Apps Script
+        fetch(SHEETS_URL, {
+            method:  'POST',
+            mode:    'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        }).catch(function(){});
+
+        // → Dispara evento Lead no Meta Pixel
+        if (typeof fbq === 'function') {
+            fbq('track', 'Lead');
+        }
+
+        // → Mostra mensagem de sucesso
         document.getElementById('form-inner').style.display = 'none';
         document.getElementById('success-box').style.display = 'block';
+
+        // → Abre WhatsApp com os dados do lead
+        var msg = encodeURIComponent(
+            '*Nova inscrição, Webinário Barbearia 1907* 🎉\n\n' +
+            '👤 Nome: '             + nome          + '\n' +
+            '📱 WhatsApp: '         + telefone       + '\n' +
+            '✂️ Barbearia: '        + barbearia      + '\n' +
+            '📅 Tempo no mercado: ' + tempo.value    + '\n' +
+            '👥 Funcionários: '     + func.value
+        );
         setTimeout(function() {
-            window.open('https://wa.me/' + numero + '?text=' + msg, '_blank');
+            window.open('https://wa.me/' + WA_NUMERO + '?text=' + msg, '_blank');
         }, 900);
     }
 </script>
